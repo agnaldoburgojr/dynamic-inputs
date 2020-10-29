@@ -1,4 +1,4 @@
-import React, { useState, useEffect, InputHTMLAttributes} from 'react';
+import React, { useState, useEffect, InputHTMLAttributes, useRef} from 'react';
 
 import {Container} from './styles'
 
@@ -7,7 +7,8 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   name: string;
   containerStyle?: object;
   ch(name: string, value: string): void;
-  setChangeElement(namekey: string): void
+  setChangeElement(namekey: string): void;
+  //ref: React.RefObject<any>
 
 }
 
@@ -23,9 +24,13 @@ interface Data {
 
 export const Input: React.FC<InputProps> = ({name, ch, setChangeElement, ...rest}) => {
   const [value, setValue] = useState('')
+  const ref = useRef<HTMLInputElement>(null)
+
+  useEffect(()=> {
+    ref.current?.focus();
+  }, [])
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    
     setValue(event.target.value)
     ch(name, event.target.value )
   }
@@ -38,7 +43,7 @@ export const Input: React.FC<InputProps> = ({name, ch, setChangeElement, ...rest
   console.log('Input', {...rest})
   return (
     <Container>
-      <input {...rest} onChange={handleChange} value={value}/>
+      <input {...rest} onChange={handleChange} value={value} ref={ref}/>
       <button type='button' onClick={handleDelete}>Delete</button>
     </Container>
   )
@@ -52,38 +57,28 @@ const App: React.FC = () => {
   const [changeElement, setChangeElement] = useState('')
   const [printValues, setPrintValues] = useState('')
 
+  const ref = useRef(null)
+
   useEffect(()=> {
-   console.log('effect', changeElement, elements)
-
    const key = changeElement.split('-')[1]
-  
-   const newElements = elements.filter((element) => element.key !== key)
+   setElements(prevState => prevState.filter((element) => element.key !== key))
+   
    delete values[changeElement]
-   
-   setElements(newElements)
-   
 
-  }, [changeElement])
+  }, [changeElement, values])
 
   const handleChange = (name: string, value: string) => {
     setValues({...values, [name]: value})
     
   } 
 
-  const handleDelete = (nameKey: string) => {
-    // console.log(nameKey, elements)
-    // const newElements = elements.filter((element)=> {
-    //   console.log(element.key, nameKey)
-
-    //   return element.key !== nameKey
-    // })
- 
-    //  console.log(newElements)
-
-    console.log(elements)
-  }
+  useEffect(()=> {
+    elements.length && 
+    console.log('MINHA REF', ref.current)
+  }, [elements])
 
   const createInput = () => {
+   
     const element = React.createElement(Input, {key: count, name: `input-${count}`, ch: handleChange, setChangeElement: setChangeElement}, null)
 
     setCount(count + 1)
@@ -113,10 +108,13 @@ const App: React.FC = () => {
       <h2> Próximas tarefas</h2>
       <ul>
       <li>
-          Resolver a dependencia do effect
+         <s> Resolver a dependencia do effect</s>
         </li>
         <li>
-          Trocar Focus quando clicar no input principal
+          <s>Trocar Focus quando clicar no input principal</s>
+        </li>
+        <li>
+          Resolver o problema dos valores ao enviar
         </li>
         <li>
           Remover com duplo clique
