@@ -1,24 +1,134 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React, { useState, useEffect, InputHTMLAttributes} from 'react';
 
-function App() {
+import {Container} from './styles'
+
+
+interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+  name: string;
+  containerStyle?: object;
+  ch(name: string, value: string): void;
+  setChangeElement(namekey: string): void
+
+}
+
+// interface Data {
+//   name: string;
+//   value: string;
+// }
+
+interface Data {
+  [index: string]: number | string;
+
+}
+
+export const Input: React.FC<InputProps> = ({name, ch, setChangeElement, ...rest}) => {
+  const [value, setValue] = useState('')
+
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    
+    setValue(event.target.value)
+    ch(name, event.target.value )
+  }
+
+  const handleDelete = () => {
+    console.log('handleDelete Input')
+    setChangeElement(name)
+  }
+
+  console.log('Input', {...rest})
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <Container>
+      <input {...rest} onChange={handleChange} value={value}/>
+      <button type='button' onClick={handleDelete}>Delete</button>
+    </Container>
+  )
+}
+
+
+const App: React.FC = () => {
+  const [elements, setElements] = useState<React.FunctionComponentElement<InputProps>[]>([])
+  const [count, setCount] = useState(0)
+  const [values, setValues] = useState<Data>({})
+  const [changeElement, setChangeElement] = useState('')
+  const [printValues, setPrintValues] = useState('')
+
+  useEffect(()=> {
+   console.log('effect', changeElement, elements)
+
+   const key = changeElement.split('-')[1]
+  
+   const newElements = elements.filter((element) => element.key !== key)
+   delete values[changeElement]
+   
+   setElements(newElements)
+   
+
+  }, [changeElement])
+
+  const handleChange = (name: string, value: string) => {
+    setValues({...values, [name]: value})
+    
+  } 
+
+  const handleDelete = (nameKey: string) => {
+    // console.log(nameKey, elements)
+    // const newElements = elements.filter((element)=> {
+    //   console.log(element.key, nameKey)
+
+    //   return element.key !== nameKey
+    // })
+ 
+    //  console.log(newElements)
+
+    console.log(elements)
+  }
+
+  const createInput = () => {
+    const element = React.createElement(Input, {key: count, name: `input-${count}`, ch: handleChange, setChangeElement: setChangeElement}, null)
+
+    setCount(count + 1)
+    setElements([...elements, element])
+   
+  }
+
+  const print = () => {
+    setPrintValues(JSON.stringify(values))
+  }
+
+  console.log('createInput', elements)
+  return (
+    <div> 
+      Hello<br/>
+      {elements}
+      <input type='text'onFocus={createInput}/>
+      {/* <button type='button' onClick={createInput}>Adicionar</button> */}
+
+      <br/><br/>
+      
+      <button type='button' onClick={print}>Enviar</button>
+      <br/>
+      {printValues}
+
+      <br/><br/>
+      <h2> Próximas tarefas</h2>
+      <ul>
+      <li>
+          Resolver a dependencia do effect
+        </li>
+        <li>
+          Trocar Focus quando clicar no input principal
+        </li>
+        <li>
+          Remover com duplo clique
+        </li>
+        <li>
+          Adicionar validações e mensagens de erro
+        </li>
+        <li>
+          Adicionar uma estilização para apresentação
+        </li>
+
+      </ul>
     </div>
   );
 }
