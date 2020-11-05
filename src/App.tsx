@@ -17,6 +17,8 @@ interface Data {
 interface InputContextData {
   values: object;
   setValues(object: Data): void;
+  errors: object;
+  setErrors(object: Data): void;
 }
 
 const InputContext = createContext<InputContextData>({} as InputContextData) 
@@ -24,12 +26,17 @@ const InputContext = createContext<InputContextData>({} as InputContextData)
 export const Input: React.FC<InputProps> = ({name, setChangeElement, deleteWithDoubleClick = false,...rest}) => {
   const [value, setValue] = useState('')
   const ref = useRef<HTMLInputElement>(null)
-  const {values, setValues} = useContext(InputContext)
+  const {values, setValues, errors} = useContext(InputContext)
   const [isSecondClick, setSecondClick] = useState(false)
+
 
   useEffect(()=> {
     ref.current?.focus();
   }, [])
+
+  useEffect(()=> {
+    setValues({...values, [name]: ''})
+  }, [name, setValues])
 
   useEffect(()=> {
     let cancel = false;
@@ -49,6 +56,7 @@ export const Input: React.FC<InputProps> = ({name, setChangeElement, deleteWithD
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setValue(event.target.value)
     setValues({...values, [name]: event.target.value})
+  
   }
 
   const handleDelete = () => {
@@ -60,6 +68,15 @@ export const Input: React.FC<InputProps> = ({name, setChangeElement, deleteWithD
     setSecondClick(true)
   }
 
+  const setError = () => {
+    const err = Object.entries(errors).filter(error=> {
+     return error[0] === name
+    })
+    if(!err.length){
+      return ''
+    }
+    return err[0][1]
+  }
 
   return (
     <Container>
@@ -75,6 +92,8 @@ export const Input: React.FC<InputProps> = ({name, setChangeElement, deleteWithD
           )}
         </>
       )}
+      <br/>
+      <span>{setError()}</span>
      
 
       
@@ -87,6 +106,7 @@ const App: React.FC = () => {
   const [elements, setElements] = useState<React.FunctionComponentElement<InputProps>[]>([])
   const [count, setCount] = useState(0)
   const [values, setValues] = useState<Data>({})
+  const [errors, setErrors] = useState<Data>({})
   const [changeElement, setChangeElement] = useState('')
   const [printValues, setPrintValues] = useState('')
 
@@ -108,13 +128,33 @@ const App: React.FC = () => {
   }
 
   const print = () => {
+    const val = Object.entries(values).map(v => {
+      if(v[1] === ''){
+        return v[0]
+      }
+      return undefined
+    })
+    const e = {} as Data
+    val.map(err => {
+      if(err){
+        e[err] = 'Campo obrigatório'
+      }
+      return undefined
+    })
+    console.log(e)
+    if(Object.keys(e).length){
+      setErrors(e)
+      setPrintValues('')
+      return
+    }
+    setErrors({})
     setPrintValues(JSON.stringify(values))
   }
 
   return (
     <div> 
       Hello<br/>
-      <InputContext.Provider value={{values, setValues}}>
+      <InputContext.Provider value={{values, setValues, errors, setErrors}}>
       {elements}
       </InputContext.Provider>
       <input type='text'onFocus={createInput}/>
@@ -142,7 +182,10 @@ const App: React.FC = () => {
         <s> Remover com duplo clique</s>
         </li>
         <li>
-          Adicionar validações e mensagens de erro
+        <s> Adicionar validações e mensagens de erro</s>
+        </li>
+        <li>
+          Componentizar
         </li>
         <li>
           Adicionar uma estilização para apresentação
