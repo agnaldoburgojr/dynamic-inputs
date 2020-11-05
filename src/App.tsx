@@ -1,4 +1,4 @@
-import React, { useState, useEffect, InputHTMLAttributes, useRef} from 'react';
+import React, { useState, useEffect, InputHTMLAttributes, useRef, useContext, createContext} from 'react';
 
 import {Container} from './styles'
 
@@ -6,45 +6,78 @@ import {Container} from './styles'
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   name: string;
   containerStyle?: object;
-  ch(name: string, value: string): void;
   setChangeElement(namekey: string): void;
-  //ref: React.RefObject<any>
-
+  deleteWithDoubleClick?: boolean
 }
-
-// interface Data {
-//   name: string;
-//   value: string;
-// }
 
 interface Data {
   [index: string]: number | string;
-
 }
 
-export const Input: React.FC<InputProps> = ({name, ch, setChangeElement, ...rest}) => {
+interface InputContextData {
+  values: object;
+  setValues(object: Data): void;
+}
+
+const InputContext = createContext<InputContextData>({} as InputContextData) 
+
+export const Input: React.FC<InputProps> = ({name, setChangeElement, deleteWithDoubleClick = false,...rest}) => {
   const [value, setValue] = useState('')
   const ref = useRef<HTMLInputElement>(null)
+  const {values, setValues} = useContext(InputContext)
+  const [isSecondClick, setSecondClick] = useState(false)
 
   useEffect(()=> {
     ref.current?.focus();
   }, [])
 
+  useEffect(()=> {
+    let cancel = false;
+    function timeOut() {
+      if(isSecondClick){
+        setTimeout(()=> {
+          if(cancel) return
+          setSecondClick(false)      
+        }, 5000)
+      }
+    }
+   timeOut()
+   return () => {cancel = true;};
+
+  }, [isSecondClick])
+
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setValue(event.target.value)
-    ch(name, event.target.value )
+    setValues({...values, [name]: event.target.value})
   }
 
   const handleDelete = () => {
-    console.log('handleDelete Input')
     setChangeElement(name)
+    setSecondClick(false)
   }
 
-  console.log('Input', {...rest})
+  const handleSecondClick = () => {
+    setSecondClick(true)
+  }
+
+
   return (
     <Container>
       <input {...rest} onChange={handleChange} value={value} ref={ref}/>
-      <button type='button' onClick={handleDelete}>Delete</button>
+      {!deleteWithDoubleClick ? (
+        <button type='button' onClick={handleDelete}>Delete</button>
+      ) : (
+        <>
+          {!isSecondClick ? (
+            <button type='button' onClick={handleSecondClick}>Delete</button>
+          ): (
+            <button type='button' onClick={handleDelete}>Click Again</button>
+          )}
+        </>
+      )}
+     
+
+      
     </Container>
   )
 }
@@ -57,29 +90,17 @@ const App: React.FC = () => {
   const [changeElement, setChangeElement] = useState('')
   const [printValues, setPrintValues] = useState('')
 
-  const ref = useRef(null)
 
   useEffect(()=> {
    const key = changeElement.split('-')[1]
    setElements(prevState => prevState.filter((element) => element.key !== key))
-   
    delete values[changeElement]
 
   }, [changeElement, values])
 
-  const handleChange = (name: string, value: string) => {
-    setValues({...values, [name]: value})
-    
-  } 
-
-  useEffect(()=> {
-    elements.length && 
-    console.log('MINHA REF', ref.current)
-  }, [elements])
-
   const createInput = () => {
    
-    const element = React.createElement(Input, {key: count, name: `input-${count}`, ch: handleChange, setChangeElement: setChangeElement}, null)
+    const element = React.createElement(Input, {key: count, name: `input-${count}`, setChangeElement: setChangeElement, deleteWithDoubleClick: true}, null)
 
     setCount(count + 1)
     setElements([...elements, element])
@@ -90,13 +111,14 @@ const App: React.FC = () => {
     setPrintValues(JSON.stringify(values))
   }
 
-  console.log('createInput', elements)
   return (
     <div> 
       Hello<br/>
+      <InputContext.Provider value={{values, setValues}}>
       {elements}
+      </InputContext.Provider>
       <input type='text'onFocus={createInput}/>
-      {/* <button type='button' onClick={createInput}>Adicionar</button> */}
+     
 
       <br/><br/>
       
@@ -114,10 +136,10 @@ const App: React.FC = () => {
           <s>Trocar Focus quando clicar no input principal</s>
         </li>
         <li>
-          Resolver o problema dos valores ao enviar
+          <s>Resolver o problema dos valores ao enviar</s>
         </li>
         <li>
-          Remover com duplo clique
+        <s> Remover com duplo clique</s>
         </li>
         <li>
           Adicionar validações e mensagens de erro
