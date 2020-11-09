@@ -1,6 +1,6 @@
 import React, { useState, useEffect, InputHTMLAttributes, useRef, useContext, createContext} from 'react';
 
-import {Container} from './styles'
+import { Container } from './styles'
 
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
@@ -94,9 +94,6 @@ export const Input: React.FC<InputProps> = ({name, setChangeElement, deleteWithD
       )}
       <br/>
       <span>{setError()}</span>
-     
-
-      
     </Container>
   )
 }
@@ -141,7 +138,7 @@ const App: React.FC = () => {
       }
       return undefined
     })
-    console.log(e)
+
     if(Object.keys(e).length){
       setErrors(e)
       setPrintValues('')
@@ -152,7 +149,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <div> 
+    <Container> 
       Hello<br/>
       <InputContext.Provider value={{values, setValues, errors, setErrors}}>
       {elements}
@@ -192,7 +189,7 @@ const App: React.FC = () => {
         </li>
 
       </ul>
-    </div>
+    </Container>
   );
 }
 
